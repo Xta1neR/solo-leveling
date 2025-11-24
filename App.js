@@ -1,50 +1,36 @@
-import React, { useEffect, useRef } from 'react';
+import React from 'react';
+import { StatusBar } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+// Screens
 import HomeScreen from './screens/HomeScreen';
-import AlarmScreen from './screens/AlarmScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import PomodoroScreen from './screens/PomodoroScreen';
-import { initStorage } from './utils/storage';
-import { registerForPushNotificationsAsync, scheduleDailyAlarm } from './utils/notifications';
-import * as Notifications from 'expo-notifications';
-import { Platform } from 'react-native';
+import AlarmScreen from './screens/AlarmScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  const navigationRef = useRef();
-
-  useEffect(() => {
-    (async () => {
-      await initStorage();
-      await registerForPushNotificationsAsync();
-      // schedule default daily alarm (reads user wake time inside HomeScreen too)
-      // Keep a sensible default here; HomeScreen will re-schedule based on stored wake_time.
-      await scheduleDailyAlarm(5, 0);
-    })();
-
-    const sub = Notifications.addNotificationResponseReceivedListener(response => {
-      // When user taps the notification, open Alarm screen
-      try {
-        navigationRef.current?.navigate('Alarm');
-      } catch (e) {
-        console.warn('navigate on notification response failed', e);
-      }
-    });
-
-    return () => {
-      sub.remove();
-    };
-  }, []);
-
   return (
-    <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen name="Home" component={HomeScreen} options={{ title: '5AM Challenge' }} />
-        <Stack.Screen name="Alarm" component={AlarmScreen} options={{ title: 'Wake Alarm' }} />
-        <Stack.Screen name="Workout" component={WorkoutScreen} options={{ title: 'Workout' }} />
-        <Stack.Screen name="Pomodoro" component={PomodoroScreen} options={{ title: 'Pomodoro' }} />
+    <NavigationContainer>
+      <StatusBar barStyle="light-content" backgroundColor="#0f172a" />
+      <Stack.Navigator 
+        screenOptions={{
+          headerStyle: { backgroundColor: '#0f172a' },
+          headerTintColor: '#fff',
+          headerTitleStyle: { fontWeight: 'bold' },
+          contentStyle: { backgroundColor: '#0f172a' }
+        }}
+      >
+        <Stack.Screen 
+          name="Home" 
+          component={HomeScreen} 
+          options={{ headerShown: false }} 
+        />
+        <Stack.Screen name="Workout" component={WorkoutScreen} />
+        <Stack.Screen name="Pomodoro" component={PomodoroScreen} />
+        <Stack.Screen name="Alarm" component={AlarmScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

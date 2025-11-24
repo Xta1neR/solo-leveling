@@ -1,68 +1,92 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, Button, ScrollView, Alert } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { WORKOUT_DATA } from '../data/workout';
 import ExerciseCard from '../components/ExerciseCard';
-import { WORKOUT } from '../data/workout';
-import { updateDailyLog, updateStreakIfNeeded, readData } from '../utils/storage';
 
-export default function WorkoutScreen() {
-  const [index, setIndex] = useState(0);
+export default function WorkoutScreen({ navigation }) {
   const [completed, setCompleted] = useState([]);
-  const [draft, setDraft] = useState(null);
 
-  useEffect(() => {
-    // load draft if exists for today
-    (async () => {
-      const date = (new Date()).toISOString().slice(0,10);
-      const d = await readData();
-      const draftData = d?.dailyLogs?.[date]?.workoutDraft || null;
-      if (draftData) {
-        setIndex(draftData.index || 0);
-        setCompleted(draftData.completed || []);
-      }
-    })();
-  }, []);
-
-  function onSetComplete({ id, set, value }) {
-    setCompleted(prev => {
-      const next = [...prev, { id, set, value }];
-      // save draft to storage
-      saveDraft(index, next);
-      return next;
-    });
-
-    // move to next exercise when appropriate
-    const ex = WORKOUT[index];
-    const setsDoneForThis = (completed.filter(c => c.id === id).length) + 1; // include current
-    if (setsDoneForThis >= ex.sets) {
-      if (index < WORKOUT.length - 1) setIndex(index + 1);
-      else onWorkoutComplete();
+  const toggleExercise = (id) => {
+    if (completed.includes(id)) {
+      setCompleted(completed.filter(item => item !== id));
+      // In a real app, you would subtract XP here
     } else {
-      // stay on same exercise until sets done
+      setCompleted([...completed, id]);
+      // We will handle XP globally in App.js later, 
+      // but visually this shows completion
     }
-  }
+  };
 
-  async function saveDraft(currentIndex, completedArr) {
-    const date = (new Date()).toISOString().slice(0,10);
-    await updateDailyLog(date, { workoutDraft: { index: currentIndex, completed: completedArr } });
-  }
-
-  async function onWorkoutComplete() {
-    const date = (new Date()).toISOString().slice(0,10);
-    // log final workout
-    await updateDailyLog(date, { workout: { completed: true, exercises: completed }, workoutDraft: null });
-    await updateStreakIfNeeded(date);
-    Alert.alert('Well done', 'Workout logged. Start Pomodoro to track focus.');
-  }
+  const progress = completed.length / WORKOUT_DATA.length;
 
   return (
-    <ScrollView style={{ flex:1 }} contentContainerStyle={{ padding:16 }}>
-      <Text style={{ fontSize:22, fontWeight:'700' }}>Workout</Text>
-      <Text style={{ marginBottom:8 }}>Current: {WORKOUT[index].name} ({index + 1}/{WORKOUT.length})</Text>
-      <ExerciseCard exercise={WORKOUT[index]} onSetComplete={onSetComplete} />
-      <View style={{ height: 8 }} />
-      <Button title="Finish workout" onPress={onWorkoutComplete} />
-      <View style={{ height: 12 }} />
-      <Text>Completed sets: {completed.length}</Text>
-    </ScrollView>
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>Daily Quest</Text>
+        <Text style={styles.subtitle}>Difficulty: E-Rank</Text>
+      </View>
+
+      {/* Progress Bar */}
+      <View style={styles.progressContainer}>
+        <View style={[styles.progressBar, { width: `${progress * 100}%` }]} />
+      </View>
+      <Text style={styles.progressText}>
+        {completed.length} / {WORKOUT_DATA.length} Completed
+      </Text>
+
+      <ScrollView contentContainerStyle={styles.list}>
+        {WORKOUT_DATA.map((item) => (
+          <ExerciseCard 
+            key={item.id} 
+            exercise={item} 
+            isCompleted={completed.includes(item.id)}
+            onToggle={() => toggleExercise(item.id)}
+          />
+        ))}
+      </ScrollView>
+    </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0f172a', // Dark background
+    padding: 20,
+  },
+  header: {
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#fff',
+  },
+  subtitle: {
+    color: '#3b82f6', // Blue
+    fontWeight: 'bold',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+  },
+  progressContainer: {
+    height: 6,
+    backgroundColor: '#1e293b',
+    borderRadius: 3,
+    marginBottom: 8,
+    overflow: 'hidden',
+  },
+  progressBar: {
+    height: '100%',
+    backgroundColor: '#3b82f6',
+  },
+  progressText: {
+    color: '#94a3b8',
+    fontSize: 12,
+    textAlign: 'right',
+    marginBottom: 20,
+  },
+  list: {
+    paddingBottom: 40,
+  },
+});
