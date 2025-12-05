@@ -7,6 +7,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import HomeScreen from './screens/HomeScreen';
 import WorkoutScreen from './screens/WorkoutScreen';
 import PomodoroScreen from './screens/PomodoroScreen';
+import RunnerScreen from './screens/RunnerScreen';
 import AlarmScreen from './screens/AlarmScreen';
 
 const Stack = createNativeStackNavigator();
@@ -31,6 +32,7 @@ export default function App() {
         <Stack.Screen name="Workout" component={WorkoutScreen} />
         <Stack.Screen name="Pomodoro" component={PomodoroScreen} />
         <Stack.Screen name="Alarm" component={AlarmScreen} />
+        <Stack.Screen name="Runner" component={RunnerScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

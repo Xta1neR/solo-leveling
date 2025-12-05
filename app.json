@@ -1,0 +1,36 @@
+{
+  "expo": {
+    "name": "Solo Leveling Challenge",
+    "slug": "solo-leveling",
+    "version": "1.0.0",
+    "sdkVersion": "54.0.0",
+    "platforms": [
+      "android"
+    ],
+    "orientation": "portrait",
+    "icon": "./assets/splash.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#05060a"
+    },
+    "android": {
+      "package": "com.r1turaj.sololeveling",
+      "versionCode": 1,
+      "permissions": [
+        "VIBRATE"
+      ],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/splash.png",
+        "backgroundColor": "#05060a"
+      }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "c08375c4-e72d-4840-bb8f-af3d764c13ca"
+      }
+    },
+    "owner": "r1turaj"
+  }
+}

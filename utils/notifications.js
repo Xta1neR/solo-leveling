@@ -1,53 +1,71 @@
+// /utils/notifications.js
 import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
-/**
- * Request permissions for notifications.
- */
-export async function registerForPushNotificationsAsync(){
-  try{
-    const settings = await Notifications.getPermissionsAsync();
-    if(settings.granted || settings.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL) {
-      return settings;
-    }
-    const status = await Notifications.requestPermissionsAsync();
-    return status;
-  }catch(e){
-    console.warn('notif permission error', e);
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
+export async function requestPermissionsAsync() {
+  const { status } = await Notifications.getPermissionsAsync();
+  if (status !== 'granted') {
+    const { status: newStatus } = await Notifications.requestPermissionsAsync();
+    return newStatus === 'granted';
+  }
+  return true;
+}
+
+export async function ensureAndroidChannel() {
+  if (Platform.OS === 'android') {
+    await Notifications.setNotificationChannelAsync('daily-alarm', {
+      name: 'Daily Alarm',
+      importance: Notifications.AndroidImportance.HIGH,
+      sound: 'default',
+      vibrationPattern: [0, 250, 250, 250],
+      lightColor: '#FF0000',
+    });
   }
 }
 
 /**
- * Schedule a daily alarm at a specific hour/minute.
- * Uses a repeating trigger (works on managed workflow for many Expo versions).
+ * Schedules a daily repeating notification at hour:minute.
+ * Returns the identifier returned by scheduleNotificationAsync.
  */
-export async function scheduleDailyAlarm(hour=5, minute=0){
+export async function scheduleDailyAlarm(hour = 5, minute = 0, body = "Wake up! It's time to level up.") {
+  // On modern expo, you can use a trigger object with hour/minute repeat
+  const trigger = {
+    hour,
+    minute,
+    repeats: true,
+  };
+  const id = await Notifications.scheduleNotificationAsync({
+    content: {
+      title: '5 AM Club ⏰',
+      body,
+      sound: 'default',
+      priority: Notifications.AndroidNotificationPriority.HIGH,
+    },
+    trigger,
+  });
+  return id;
+}
+
+export async function cancelScheduledNotification(id) {
   try {
-    // Cancel all prev scheduled notifications for simplicity
+    await Notifications.cancelScheduledNotificationAsync(id);
+  } catch (e) {
+    console.warn('Failed to cancel notification', e);
+  }
+}
+
+export async function cancelAllScheduledNotifications() {
+  try {
     await Notifications.cancelAllScheduledNotificationsAsync();
-
-    // If SDK supports trigger object with {hour, minute, repeats:true}, use that:
-    const trigger = { hour, minute, repeats: true };
-
-    await Notifications.scheduleNotificationAsync({
-      content: { title: 'Wake up — 5AM Challenge', body: 'Complete the wake task to stop the alarm' },
-      trigger
-    });
   } catch (e) {
-    console.warn('scheduleDailyAlarm error', e);
-  }
-}
-
-/**
- * Send immediate local notification
- */
-export async function sendImmediate(title, body){
-  try {
-    await Notifications.scheduleNotificationAsync({
-      content: { title, body },
-      trigger: null
-    });
-  } catch (e) {
-    console.warn('sendImmediate error', e);
+    console.warn('Failed to cancel all notifications', e);
   }
 }
